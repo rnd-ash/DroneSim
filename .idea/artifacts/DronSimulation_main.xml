@@ -1,0 +1,23 @@
+<component name="ArtifactManager">
+  <artifact type="javafx" name="DronSimulation.main">
+    <output-path>$PROJECT_DIR$/out/artifacts/DronSimulation_main</output-path>
+    <properties id="javafx-properties">
+      <options>
+        <option name="appClass" value="week3.dronesimulationjava.DroneUI" />
+        <option name="description" value="" />
+        <option name="height" value="900" />
+        <option name="htmlPlaceholderId" value="" />
+        <option name="msgOutputLevel" value="Verbose" />
+        <option name="title" value="Drone Simulation (26011139)" />
+        <option name="vendor" value="" />
+        <option name="version" value="" />
+        <option name="width" value="1600" />
+      </options>
+    </properties>
+    <root id="root">
+      <element id="archive" name="DronSimulation_main.jar">
+        <element id="module-output" name="DronSimulation.main" />
+      </element>
+    </root>
+  </artifact>
+</component>
