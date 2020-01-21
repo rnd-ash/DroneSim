@@ -74,10 +74,14 @@ public abstract class Sprite {
     // Debug boolean if boundary is currently being shown on screen
     protected boolean boundaryShown = false;
 
-    protected SpriteImageClass sprite_image;
+    private SpriteImageClass sprite_image;
 
     /**
-     * Sprite class constructor
+     * General private Sprite constructor.
+     * If j is null, then it loads the data of the sprite from x,y,r,animation_stage and animation_fps,
+     * if j is present, then we attempt to load the sprites data from JSON Object instead, assuming its from a save
+     * file.
+     *
      * @param layer Layer to display the sprite on
      * @param x Initial X coords of the sprite
      * @param y Initial Y coords of the sprite
@@ -85,27 +89,58 @@ public abstract class Sprite {
      * @param animation_stage Number of frames in the animation for sprite. If static animation, use 1
      * @param animation_fps FPS to play the sprite animation at
      */
-    public Sprite(Pane layer, double x, double y, double r, int animation_stage, int animation_fps) {
+    private Sprite(Pane layer, double x, double y, double r, int animation_stage, int animation_fps, JSONObject j) {
         this.layer = layer;
-        this.rotation = r;
-        frame_number = 0;
-        this.x = x;
-        this.y = y;
-        this.uuid = UUID.randomUUID();
-        animation_stages = animation_stage-1;
-        animation_frame_interval_ms = 1000 / animation_fps;
+        if (j == null) {
+            this.rotation = r;
+            frame_number = 0;
+            this.x = x;
+            this.y = y;
+            this.uuid = UUID.randomUUID();
+            animation_stages = animation_stage - 1;
+            animation_frame_interval_ms = 1000 / animation_fps;
+        } else {
+            this.animation_frame_interval_ms = j.optInt("Animation_Interval_MS");
+            this.animation_stages = j.optInt("Animation_stages");
+            this.rotation = j.optDouble("Rotation");
+            this.uuid = UUID.fromString(j.optString("UUID"));
+            this.x = j.optDouble("x_coord");
+            this.y = j.optDouble("y_coord");
+            this.dx = j.optDouble("x_veloc");
+            this.dy = j.optDouble("y_veloc");
+        }
     }
 
-    public Sprite(Pane layer, JSONObject j) throws JSONException {
-        this.layer = layer;
-        this.animation_stages = j.getInt("Animation_stages");
-        //this.anim
+    /**
+     * New sprite constructor for sprite class.
+     * This uses raw values to set values within the sprite class, rather than reading a JSON Object
+     * @param layer Layer to place a sprite on
+     * @param x Initial X Coordinate of the Sprite
+     * @param y Initial Y Coordinate of the sprite
+     * @param r Initial Rotation of the sprite
+     * @param animation_frames Number of animation frames within the Sprite's image
+     * @param animation_fps Target FPS for animating the sprite
+     */
+    public Sprite(Pane layer, double x, double y, double r, int animation_frames, int animation_fps) {
+        this(layer, x, y, r, animation_frames, animation_fps, null);
+    }
+
+    /**
+     * JSON Object based constructor - Used when attempting to load a Sprite from a JSON Object entry from a save file
+     * @param layer Layer to place the sprite on
+     * @param j JSON Object to use when setting all sprite's values
+     */
+    public Sprite(Pane layer, JSONObject j) {
+        this(layer, 0, 0, 0, 0, 0, j);
     }
 
     /**
      * Sets image data for sprite. This automatically calculates the width and height of the sprite,
      * as well as doing the initial relocate / rotate command.
      * @param img Image to set
+     * @param j JSON Object to attempt to parse for the sprite
+     *
+     * @throws JSONException if loading failed due to malformed JSON
      */
     public void setImageData(SpriteImageClass img, JSONObject j) throws JSONException {
         this.sprite_image = img;
@@ -184,18 +219,19 @@ public abstract class Sprite {
     }
 
     /**
-     * Called every frame. Used to move the sprite on the grid by changing its dy and dx values.
+     * Function to be called on every frame of the simulation
      */
     public void move() {
-        if (this.x < 0-this.width) {
-            this.x = DroneUI.ARENA_MAX_WIDTH;
-        } else if (this.x > DroneUI.ARENA_MAX_WIDTH+this.width) {
+        // Wrap drones around the arena in the event
+        if (this.x <= 0) {
+            this.x = DroneUI.ARENA_MAX_WIDTH-this.width;
+        } else if (this.x >= DroneUI.ARENA_MAX_WIDTH-this.width) {
             this.x = 0;
         }
 
-        if (this.y < 0-this.height) {
-            this.y = DroneUI.ARENA_MAX_HEIGHT;
-        } else if (this.y > DroneUI.ARENA_MAX_HEIGHT+this.height) {
+        if (this.y <= 0) {
+            this.y = DroneUI.ARENA_MAX_HEIGHT-this.height;
+        } else if (this.y >= DroneUI.ARENA_MAX_HEIGHT-this.height) {
             this.y = 0;
         }
     }
@@ -288,6 +324,7 @@ public abstract class Sprite {
      * Debug method to hide the bouncing box of the sprite.
      */
     public void hideBoundary() {
+        // Only remove rectangle from screen if it has been initialized already
         if (rect != null) {
             this.layer.getChildren().remove(rect);
         }
@@ -298,7 +335,7 @@ public abstract class Sprite {
      * Called when the Sprite is removed from the screen.
      */
     public void onRemove() {
-        hideBoundary();
+        hideBoundary(); // Hide boundary before we remove the sprite - Prevents a ghost boundary from being shown
         this.layer.getChildren().remove(this.imageView);
     }
 

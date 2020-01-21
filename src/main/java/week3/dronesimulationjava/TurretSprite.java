@@ -2,27 +2,27 @@ package week3.dronesimulationjava;
 
 import javafx.scene.layout.Pane;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.util.Random;
 
 public class TurretSprite extends Sprite {
-    static int IDENTIFIER = 0;
-
-    Turret w;
-    Random rand;
-    int id;
     public TurretSprite(Pane layer, double x, double y, double r) {
         super(layer, x, y, r, 1,5);
-        w = new Turret();
-        rand = new Random();
-        id = IDENTIFIER;
-        IDENTIFIER++;
         try {
             super.setImageData(new Turret(), null);
         } catch (JSONException e){
             Logger.error("Cannot set image data for Lazer!");
         }
     }
+
+    public TurretSprite(Pane layer, JSONObject j) {
+        super(layer, j);
+        try {
+            setImageData(new Turret(), j);
+        } catch (JSONException ignored){}
+    }
+
     public void move() {
 
     }

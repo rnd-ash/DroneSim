@@ -13,7 +13,6 @@ import org.json.JSONObject;
 
 
 import java.util.ArrayList;
-import java.util.Random;
 
 public class DroneSprite extends Sprite {
 
@@ -21,9 +20,6 @@ public class DroneSprite extends Sprite {
     Circle view_low;
     Circle view_med;
     Circle view_high;
-
-    Drone d;
-    Random rand;
 
     // View ring object lists. These fill up depending on what Objects the drones see in their radar rings
     private ArrayList<Sprite> inLowRadar = new ArrayList<>(); // Low Priority ring
@@ -43,22 +39,27 @@ public class DroneSprite extends Sprite {
      */
     public DroneSprite(Pane layer, double x, double y) {
         super(layer, x, y, 0, 4,25);
-        rand = new Random();
 
         // Set the drones initial velocities to be anywhere from -1 to 1
         this.dx = -1 + (Math.random() * 2);
         this.dy = -1 + (Math.random() * 2);
-        d = new Drone();
         try {
             setImageData(new Drone(), null);
+        } catch (JSONException ignored){}
+    }
+
+    public DroneSprite(Pane layer, JSONObject j) {
+        super(layer, j);
+        try {
+            setImageData(new Drone(), j);
         } catch (JSONException ignored){}
     }
 
     /**
      * Overriding Sprite's setImageData function.
      * @param img Image to set
-     * @param j
-     * @throws JSONException
+     * @param j JSON to attempt to load image from (If present)
+     * @throws JSONException if JSON was given but was invalid and couldn't be parsed
      */
     @Override
     public void setImageData(SpriteImageClass img, JSONObject j) throws JSONException {
@@ -216,9 +217,18 @@ public class DroneSprite extends Sprite {
      */
     public void onCollides(Sprite hit) {
         // The drone just collided with something
-        if (Math.abs(this.getCenterX() - hit.getCenterX()) < 75 ||
-            Math.abs(this.getCenterY() - hit.getCenterY()) < 75
+        if (hit instanceof LazerSprite) {
+            return;
+        }
+        if (Math.abs(this.getCenterX() - hit.getCenterX()) < 50 ||
+            Math.abs(this.getCenterY() - hit.getCenterY()) < 50
         ) {
+            Logger.warn(String.format("Drone %s is inside %s", uuid, hit.uuid));
+            this.y += -25 + Math.random() * 50;
+            this.x += -25 + Math.random() * 50;
+        }
+
+        else {
             if (this.dy < 0) {
                 this.dy = MAX_VELOCITY;
             } else {
@@ -233,10 +243,6 @@ public class DroneSprite extends Sprite {
         }
         // OOPS! The Drone ended up inside another object! Teleport the drone by changing its velocities drastically
         // In order to move the drone out of object its stuck inside of.
-        else {
-            this.dy = -this.dy - (-1 + new Random().nextDouble() + 1);
-            this.dx = -this.dx - (-1 + new Random().nextDouble() + 1);
-        }
     }
 
     boolean healthShown = false;

@@ -3,32 +3,49 @@ package week3.dronesimulationjava;
 import javafx.scene.image.Image;
 import javafx.scene.layout.Pane;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.awt.geom.Rectangle2D;
 import java.util.Random;
 
 public class LazerSprite extends Sprite {
+    // Override MAX Velocity
     static {
         MAX_VELOCITY = 2.5;
     }
-    static int IDENTIFIER = 0;
-    int ticksAlive = 0;
-    int maxTicksAlive;
-    Random rand;
-    int id;
+    // Number of ticks the Lazer was alive for
+    private int ticksAlive = 0;
+
+    // Number of max ticks allowed
+    private int maxTicksAlive;
+
+    /** Indicates if the the lazer has hit something yet **/
+    boolean isHit = false;
+
+
     public LazerSprite(Pane layer, double x, double y, double r) {
         super(layer, x, y, r, 1,1);
-        rand = new Random();
-        id = IDENTIFIER;
-        IDENTIFIER++;
         this.dx = Math.cos(Math.toRadians(r+90)) * MAX_VELOCITY;
         this.dy = Math.sin(Math.toRadians(r+90)) * MAX_VELOCITY;
-        maxTicksAlive = 200 + rand.nextInt(100);
+        maxTicksAlive = 200 + (int) (Math.random() * 100);
         try {
             super.setImageData(new Lazer(), null);
         } catch (JSONException ignored){}
     }
 
+    public LazerSprite(Pane layer, JSONObject j) {
+        super(layer, j);
+        try {
+            setImageData(new Lazer(), j);
+        } catch (JSONException ignored){
+
+        }
+    }
+
+    /**
+     * Indicates if the lazer has expired and should be removed from the screen
+     * @return Boolean indicating if the lazer has been alive for too long and should be removed from the screen
+     */
     public boolean lazerDead() {return this.ticksAlive >= maxTicksAlive; }
 
     @Override
@@ -39,18 +56,11 @@ public class LazerSprite extends Sprite {
     }
 
 
-    int hitCount = 0;
     public void onCollides(Sprite hit) {
         if (hit instanceof DroneSprite) {
             DroneSprite drone = (DroneSprite) hit;
-            this.layer.getChildren().remove(this.imageView);
-            this.image = new Image(getClass().getResourceAsStream("/hit.png"));
-            this.imageView.setImage(image);
-            this.layer.getChildren().add(this.imageView);
-            if (hitCount == 0) {
-                drone.health_points -= 1;
-            }
-            hitCount++;
+            drone.health_points -= Math.random() * 3;
+            isHit = true;
         }
     }
 

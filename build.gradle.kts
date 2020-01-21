@@ -8,6 +8,7 @@ plugins {
     java
     kotlin("jvm") version "1.3.50"
     application
+    `java-library`
 }
 
 repositories {
@@ -63,4 +64,9 @@ tasks.withType(Jar::class) {
     from (
         configurations.compile.get().map { if (it.isDirectory) it else zipTree(it) }
     )
+}
+
+tasks.register("jdoc", Javadoc::class) {
+    this.source = sourceSets["main"].allJava
+    this.isFailOnError = false
 }
